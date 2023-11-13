@@ -8,6 +8,6 @@
 
 - src: geerlingguy.docker
 
-- src: git@github.com:fourstepper/ansible-role-fail2ban.git
+- src: git@codeberg.org:fourstepper/ansible-role-fail2ban.git
   scm: git
-  version: master
+  version: main
