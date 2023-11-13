@@ -1,0 +1,13 @@
+- src: git@github.com:fourstepper/ansible-role-automation-user.git
+  scm: git
+  version: master
+
+- src: git@github.com:fourstepper/ansible-role-hostname.git
+  scm: git
+  version: main
+
+- src: geerlingguy.docker
+
+- src: git@github.com:fourstepper/ansible-role-fail2ban.git
+  scm: git
+  version: master

@@ -1,0 +1,190 @@
+version: "3.4"
+services:
+  traefik:
+    image: "traefik:v2.8.4"
+    container_name: "traefik"
+    restart: always
+    environment:
+      ACME_DNS_API_BASE: https://acme.robinopletal.com:8543
+      CF_DNS_API_TOKEN: "{{ cloudflare_dns_api_token }}"
+      LEGO_EXPERIMENTAL_CNAME_SUPPORT: "true"
+    command:
+      - "--log.level=INFO"
+      - "--certificatesresolvers.cloudflare.acme.dnschallenge=true"
+      - "--certificatesresolvers.cloudflare.acme.dnschallenge.provider=cloudflare"
+      - "--certificatesresolvers.cloudflare.acme.email=me@robinopletal.com"
+      - "--certificatesresolvers.cloudflare.acme.dnschallenge.resolvers=1.1.1.1:53,1.0.0.1:53"
+      - "--certificatesresolvers.cloudflare.acme.storage=/letsencrypt/acme-cloudflare.json"
+      # tls challenge
+      - "--certificatesresolvers.mytlschallenge.acme.tlschallenge=true"
+      - "--certificatesresolvers.mytlschallenge.acme.email=me@robinopletal.com"
+      - "--certificatesresolvers.mytlschallenge.acme.storage=/letsencrypt/acme.json"
+      # - "--certificatesresolvers.mytlschallenge.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--entrypoints.websecure.address=:443"
+      - "--providers.file.directory=/etc/traefik/dynamic_conf"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./tools/traefik/config.yml:/etc/traefik/dynamic_conf/conf.yml:ro"
+      - "./letsencrypt:/letsencrypt"
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: always
+    expose:
+    - "9090"
+    command:
+    - --config.file=/etc/prometheus/prometheus.yml
+    volumes:
+    - ./.prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - node_exporter
+
+  node_exporter:
+    image: quay.io/prometheus/node-exporter:latest
+    container_name: node_exporter
+    expose:
+      - 9100
+    command:
+      - '--path.rootfs=/host'
+    pid: host
+    restart: unless-stopped
+    volumes:
+      - '/:/host:ro,rslave'
+
+  hugo-robinopletal:
+    image: codeberg.org/fourstepper/robinopletal.com:latest
+    container_name: robinopletal.com
+    expose:
+      - "8080"
+    restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.hugo_robinopletal.rule=Host(`robinopletal.com`,`www.robinopletal.com`)"
+      - "traefik.http.routers.hugo_robinopletal.entrypoints=websecure"
+      - "traefik.http.routers.hugo_robinopletal.tls.certresolver=cloudflare"
+      - "traefik.http.middlewares.chain.chain.middlewares=matrix_redirect,securityheaders"
+      - "traefik.http.routers.hugo_robinopletal.middlewares=chain"
+      - "traefik.http.middlewares.matrix_redirect.redirectregex.regex=^https://robinopletal.com/.well-known/matrix/(.*)"
+      - "traefik.http.middlewares.matrix_redirect.redirectregex.replacement=https://matrix.robinopletal.com/.well-known/matrix/$${1}"
+      - "traefik.http.middlewares.securityheaders.headers.STSSeconds=31536000"
+      - "traefik.http.middlewares.securityheaders.headers.STSIncludeSubdomains=true"
+      - "traefik.http.middlewares.securityheaders.headers.STSPreload=true"
+
+  joplin-server:
+    environment:
+      - APP_BASE_URL=https://joplin.robinopletal.com
+      - APP_PORT=22300
+      - POSTGRES_PASSWORD={{ joplin_db_password }}
+      - POSTGRES_DATABASE=joplin
+      - POSTGRES_USER=joplin
+      - POSTGRES_PORT=5432
+      - POSTGRES_HOST=joplin-db
+      - DB_CLIENT=pg
+      - MAILER_ENABLED=1
+      - MAILER_HOST=smtp.gmail.com
+      - MAILER_PORT=465
+      - MAILER_SECURITY=tls
+      - MAILER_AUTH_USER=fourstepperalerts@gmail.com
+      - MAILER_AUTH_PASSWORD="{{ fourstepper_mailer_auth_password }}"
+      - MAILER_NOREPLY_NAME=JoplinServer
+      - MAILER_NOREPLY_EMAIL=joplin@robinopletal.com
+    restart: unless-stopped
+    image: joplin/server:latest
+    container_name: joplin-server
+    labels:
+      - "traefik.enable=true"
+        # add redirect root to path
+      - "traefik.http.routers.joplin-server.middlewares=redirect-to-login"
+      - "traefik.http.middlewares.redirect-to-login.redirectregex.regex=^https:\\/\\/([^\\/]+)\\/?$$"
+      - "traefik.http.middlewares.redirect-to-login.redirectregex.replacement=https://$$1/login"
+      - "traefik.http.routers.joplin-server.rule=Host(`joplin.robinopletal.com`)"
+      - "traefik.http.routers.joplin-server.entrypoints=websecure"
+      - "traefik.http.routers.joplin-server.tls.certresolver=cloudflare"
+      - "traefik.http.routers.joplin.tls=true"
+        # - "traefik.http.middlewares.sslheader.headers.customrequestheaders.X-Forwarded-Proto = http"
+        # - "traefik.http.routers.joplin-server.service=joplin-server"
+      - "traefik.http.services.joplin-server.loadbalancer.passhostheader=true"
+      - "traefik.http.services.joplin-server.loadbalancer.server.port=22300"
+  joplin-db:
+    restart: unless-stopped
+    container_name: joplin-db
+    image: postgres:13.1
+    volumes:
+      - ./.joplin-server/postgres:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=joplin
+      - POSTGRES_USER=joplin
+      - POSTGRES_DB=joplin
+
+  qweebs-static-site:
+    container_name: qweebs-static-site
+    build:
+      context: ./.qweebs-static-site
+    restart: always
+    expose:
+      - 80
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.qweebs-static-site.rule=Host(`qweebs.com`,`www.qweebs.com`)"
+      - "traefik.http.routers.qweebs-static-site.entrypoints=websecure"
+      - "traefik.http.routers.qweebs-static-site.tls.certresolver=cloudflare"
+      - "traefik.http.routers.qweebs-static-site.middlewares=qweebs-stripprefix"
+      - "traefik.http.middlewares.qweebs-stripprefix.stripprefixregex.regex=(.*)"
+      - "traefik.http.middlewares.qweebs-redirect.redirectregex.regex=^https:\\/\\/([^\\/]+)\\/?$$"
+      - "traefik.http.middlewares.qweebs-redirect.redirectregex.replacement=https://qweebs.com"
+      - "traefik.http.routers.discord_qweebs.rule=Host(`discord.qweebs.com`)"
+      - "traefik.http.routers.discord_qweebs.entrypoints=websecure"
+      - "traefik.http.routers.discord_qweebs.tls.certresolver=cloudflare"
+      - "traefik.http.routers.discord_qweebs.middlewares=discord@docker"
+      - "traefik.http.middlewares.discord.redirectregex.regex=^https:\\/\\/([^\\/]+)\\/?$$"
+      - "traefik.http.middlewares.discord.redirectregex.replacement=https://discord.com/invite/cmjMM9Ccq3"
+
+  chloewinkel_dot_com_web:
+    depends_on:
+      - chloewinkel_dot_com_db
+    build:
+      context: ./.chloewinkel_dot_com/chloewinkel-dockerfile
+    container_name: "chloewinkel_dot_com_web"
+    volumes:
+      - ./.chloewinkel_dot_com/site_data:/var/www/html
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.middlewares.securityheaders.headers.STSSeconds=31536000"
+      - "traefik.http.middlewares.securityheaders.headers.STSIncludeSubdomains=true"
+      - "traefik.http.middlewares.securityheaders.headers.STSPreload=true"
+      - "traefik.http.routers.whoami.middlewares=securityheaders@docker"
+      - "traefik.http.routers.whoami.rule=Host(`chloewinkel.com`,`www.chloewinkel.com`)"
+      - "traefik.http.routers.whoami.entrypoints=websecure"
+      - "traefik.http.routers.whoami.tls.certresolver=cloudflare"
+    restart: always
+    environment:
+      WORDPRESS_DB_HOST: chloewinkel_dot_com_db:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: "{{ mysql_password_chloewinkel }}"
+      WORDPRESS_DB_NAME: wordpress
+
+  chloewinkel_dot_com_db:
+    image: mariadb:10.7
+    volumes:
+      - ./.chloewinkel_dot_com/db_data:/var/lib/mysql
+    container_name: "chloewinkel_dot_com_db"
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: "{{ mysql_root_password_chloewinkel }}"
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: "{{ mysql_password_chloewinkel }}"
+
+
+volumes:
+  db_data:
+  miniflux-db:

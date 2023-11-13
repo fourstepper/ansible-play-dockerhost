@@ -1,0 +1,104 @@
+---
+- hosts: all
+
+  pre_tasks:
+    - name: Include credential vars
+      include_vars: defaults/credentials.yml
+
+    - name: Include general vars
+      include_vars: defaults/main.yml
+
+  roles:
+    - name: Include docker role
+      role: geerlingguy.docker
+      become: true
+
+    - name: Include fail2ban role
+      role: ansible-role-fail2ban
+      become: true
+
+  tasks:
+    - name: Install python dependencies
+      package:
+        name: "{{ item }}"
+        state: present
+      become: true
+      loop:
+        - python3
+        - python3-pip
+        - python3-setuptools
+
+    - name: Make sure docker python module is installed
+      pip:
+        name: "docker, docker-compose"
+      become: true
+
+    - name: Create the needed directory structure
+      file:
+        path: "{{ workdir }}"
+        state: directory
+        mode: 0600
+      become: true
+      changed_when: false
+
+    - name: Copy chloewinkel Dockerfile directory
+      copy:
+        src: files/chloewinkel-dockerfile
+        dest: "{{ workdir }}/.chloewinkel_dot_com/"
+      become: true
+
+    - name: Copy qweebs static site Dockerfile directory
+      copy:
+        src: files/qweebs-static-site/
+        dest: "{{ workdir }}/.qweebs-static-site"
+      become: true
+
+    - name: Copy docker-compose
+      template:
+        src: files/docker-compose.yml
+        dest: "{{ workdir }}/docker-compose.yml"
+      register: deploy_file
+      become: true
+
+    - name: Prepare the directory structure for traefik config
+      file:
+        path: "{{ workdir }}/tools/traefik"
+        state: directory
+        recurse: true
+      become: true
+
+    - name: Copy the traefik config
+      template:
+        src: "files/traefik/config.yml"
+        dest: "{{ workdir }}/tools/traefik/config.yml"
+      become: true
+
+    - name: Create the directory structure for Prometheus
+      file:
+        path: "{{ workdir }}/.prometheus"
+        state: directory
+      become: true
+
+    - name: Copy the prometheus config
+      template:
+        src: "files/prometheus/prometheus.yml"
+        dest: "{{ workdir }}/.prometheus/prometheus.yml"
+      become: true
+
+    # TODO: Edit the docker-compose up smarted (for them to work in one command)
+
+    - name: Upgrade the containers and run `docker-compose up`
+      community.general.docker_compose:
+        project_src: "{{ workdir }}"
+        pull: true
+        remove_orphans: true
+      register: output
+      become: true
+      when: upgrade
+
+    - name: Run `docker-compose up`
+      community.general.docker_compose:
+        project_src: "{{ workdir }}"
+      register: output
+      become: true
+      when: deploy_file.changed and not upgrade
