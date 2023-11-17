@@ -102,10 +102,6 @@ services:
     container_name: joplin-server
     labels:
       - "traefik.enable=true"
-        # add redirect root to path
-      - "traefik.http.routers.joplin-server.middlewares=redirect-to-login"
-      - "traefik.http.middlewares.redirect-to-login.redirectregex.regex=^https:\\/\\/([^\\/]+)\\/?$$"
-      - "traefik.http.middlewares.redirect-to-login.redirectregex.replacement=https://$$1/login"
       - "traefik.http.routers.joplin-server.rule=Host(`joplin.robinopletal.com`)"
       - "traefik.http.routers.joplin-server.entrypoints=websecure"
       - "traefik.http.routers.joplin-server.tls.certresolver=cloudflare"
