@@ -2,3 +2,5 @@
 upgrade: false
 workdir: "/deploy/root"
 ansible_public_keys_path: "{{ playbook_dir }}/files/public_keys"
+
+borgmatic_encryption_mode: repokey

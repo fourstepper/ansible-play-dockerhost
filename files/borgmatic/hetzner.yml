@@ -1,0 +1,11 @@
+encryption_passphrase: "{{ borg_encryption_key }}"
+exclude_caches: true
+
+source_directories:
+  - "/"
+
+exclude_patterns: []
+
+repositories:
+    - path: ssh://u375033-sub4@u375033.your-storagebox.de:23/./host1.borg
+      label: hetzner
