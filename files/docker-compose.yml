@@ -103,11 +103,11 @@ services:
       - POSTGRES_HOST=joplin-db
       - DB_CLIENT=pg
       - MAILER_ENABLED=1
-      - MAILER_HOST=smtp.gmail.com
+      - MAILER_HOST=smtp.migadu.com
       - MAILER_PORT=465
       - MAILER_SECURITY=tls
-      - MAILER_AUTH_USER=fourstepperalerts@gmail.com
-      - MAILER_AUTH_PASSWORD="{{ joplin_email_password }}"
+      - MAILER_AUTH_USER=joplin@robinopletal.com
+      - MAILER_AUTH_PASSWORD={{ joplin_email_password }}
       - MAILER_NOREPLY_NAME="Joplin Server"
       - MAILER_NOREPLY_EMAIL=joplin@robinopletal.com
     restart: unless-stopped
