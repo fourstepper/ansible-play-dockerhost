@@ -107,8 +107,8 @@ services:
       - MAILER_PORT=465
       - MAILER_SECURITY=tls
       - MAILER_AUTH_USER=fourstepperalerts@gmail.com
-      - MAILER_AUTH_PASSWORD="{{ fourstepper_mailer_auth_password }}"
-      - MAILER_NOREPLY_NAME=JoplinServer
+      - MAILER_AUTH_PASSWORD="{{ joplin_email_password }}"
+      - MAILER_NOREPLY_NAME="Joplin Server"
       - MAILER_NOREPLY_EMAIL=joplin@robinopletal.com
     restart: unless-stopped
     image: joplin/server:latest
