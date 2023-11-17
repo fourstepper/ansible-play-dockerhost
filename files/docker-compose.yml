@@ -119,8 +119,7 @@ services:
       - "traefik.http.routers.joplin-server.entrypoints=websecure"
       - "traefik.http.routers.joplin-server.tls.certresolver=cloudflare"
       - "traefik.http.routers.joplin.tls=true"
-        # - "traefik.http.middlewares.sslheader.headers.customrequestheaders.X-Forwarded-Proto = http"
-        # - "traefik.http.routers.joplin-server.service=joplin-server"
+      - "traefik.http.routers.joplin-server.middlewares=hsts"
       - "traefik.http.services.joplin-server.loadbalancer.passhostheader=true"
       - "traefik.http.services.joplin-server.loadbalancer.server.port=22300"
   joplin-db:
