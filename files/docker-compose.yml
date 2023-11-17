@@ -83,7 +83,7 @@ services:
     container_name: robinopletal
     expose:
       - "8080"
-    restart: always
+    restart: unless-stopped
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.robinopletal.rule=Host(`robinopletal.com`,`www.robinopletal.com`)"
@@ -91,6 +91,19 @@ services:
       - "traefik.http.routers.robinopletal.tls.certresolver=cloudflare"
       - "traefik.http.middlewares.robinopletal_chain.chain.middlewares=trim_www,hsts"
       - "traefik.http.routers.robinopletal.middlewares=robinopletal_chain"
+
+  chloewinkel:
+    image: codeberg.org/fourstepper/chloewinkel.com:c73af2027a244481364e5b0eff83f27e9eff67af
+    container_name: chloewinkel
+    expose:
+      - "8080"
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.chloewinkelv2.rule=Host(`chloe.robinopletal.com`)"
+      - "traefik.http.routers.chloewinkelv2.entrypoints=websecure"
+      - "traefik.http.routers.chloewinkelv2.tls.certresolver=cloudflare"
+      - "traefik.http.routers.chloewinkelv2.middlewares=hsts"
 
   joplin-server:
     environment:
