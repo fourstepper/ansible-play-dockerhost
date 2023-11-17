@@ -1,5 +1,1 @@
 - src: geerlingguy.docker
-
-- src: git@codeberg.org:fourstepper/ansible-role-fail2ban.git
-  scm: git
-  version: main
