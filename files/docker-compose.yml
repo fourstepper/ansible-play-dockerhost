@@ -60,24 +60,21 @@ services:
     volumes:
       - '/:/host:ro,rslave'
 
-  hugo-robinopletal:
+  robinopletal:
     image: codeberg.org/fourstepper/robinopletal.com:latest
-    container_name: robinopletal.com
+    container_name: robinopletal
     expose:
       - "8080"
     restart: always
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.hugo_robinopletal.rule=Host(`robinopletal.com`,`www.robinopletal.com`)"
-      - "traefik.http.routers.hugo_robinopletal.entrypoints=websecure"
-      - "traefik.http.routers.hugo_robinopletal.tls.certresolver=cloudflare"
-      - "traefik.http.middlewares.chain.chain.middlewares=matrix_redirect,securityheaders"
-      - "traefik.http.routers.hugo_robinopletal.middlewares=chain"
-      - "traefik.http.middlewares.matrix_redirect.redirectregex.regex=^https://robinopletal.com/.well-known/matrix/(.*)"
-      - "traefik.http.middlewares.matrix_redirect.redirectregex.replacement=https://matrix.robinopletal.com/.well-known/matrix/$${1}"
-      - "traefik.http.middlewares.securityheaders.headers.STSSeconds=31536000"
-      - "traefik.http.middlewares.securityheaders.headers.STSIncludeSubdomains=true"
-      - "traefik.http.middlewares.securityheaders.headers.STSPreload=true"
+      - "traefik.http.routers.robinopletal.rule=Host(`robinopletal.com`,`www.robinopletal.com`)"
+      - "traefik.http.routers.robinopletal.entrypoints=websecure"
+      - "traefik.http.routers.robinopletal.tls.certresolver=cloudflare"
+      - "traefik.http.routers.robinopletal.middlewares=robinopletal_securityheaders"
+      - "traefik.http.middlewares.robinopletal_securityheaders.headers.STSSeconds=31536000"
+      - "traefik.http.middlewares.robinopletal_securityheaders.headers.STSIncludeSubdomains=true"
+      - "traefik.http.middlewares.robinopletal_securityheaders.headers.STSPreload=true"
 
   joplin-server:
     environment:
