@@ -7,7 +7,6 @@ services:
     environment:
       ACME_DNS_API_BASE: https://acme.robinopletal.com:8543
       CF_DNS_API_TOKEN: "{{ cloudflare_dns_api_token }}"
-      LEGO_EXPERIMENTAL_CNAME_SUPPORT: "true"
     command:
       - "--log.level=INFO"
       - "--certificatesresolvers.cloudflare.acme.dnschallenge=true"
@@ -23,8 +22,6 @@ services:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
-      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
-      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
       - "--entrypoints.websecure.address=:443"
       - "--providers.file.directory=/etc/traefik/dynamic_conf"
     ports:
@@ -34,6 +31,27 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "./tools/traefik/config.yml:/etc/traefik/dynamic_conf/conf.yml:ro"
       - "./letsencrypt:/letsencrypt"
+    labels:
+      traefik.enable: true
+
+      # Global redirection: http to https
+      traefik.http.routers.http_catchall.rule: HostRegexp(`{host:.+}`)
+      traefik.http.routers.http_catchall.entrypoints: web
+      traefik.http.routers.http_catchall.middlewares: tohttps
+
+      # middleware: http:// to  https://
+      traefik.http.middlewares.tohttps.redirectscheme.scheme: https
+      traefik.http.middlewares.tohttps.redirectscheme.permanent: true
+
+      # middleware: https://www. to  https://
+      traefik.http.middlewares.trim_www.redirectregex.regex: ^https://www\.(.+)
+      traefik.http.middlewares.trim_www.redirectregex.replacement: https://$${1}
+      traefik.http.middlewares.trim_www.redirectregex.permanent: true
+
+      # HSTS header
+      traefik.http.middlewares.hsts.headers.STSSeconds: 31536000
+      traefik.http.middlewares.hsts.headers.STSIncludeSubdomains: true
+      traefik.http.middlewares.hsts.headers.STSPreload: true
 
   prometheus:
     image: prom/prometheus:latest
@@ -71,10 +89,8 @@ services:
       - "traefik.http.routers.robinopletal.rule=Host(`robinopletal.com`,`www.robinopletal.com`)"
       - "traefik.http.routers.robinopletal.entrypoints=websecure"
       - "traefik.http.routers.robinopletal.tls.certresolver=cloudflare"
-      - "traefik.http.routers.robinopletal.middlewares=robinopletal_securityheaders"
-      - "traefik.http.middlewares.robinopletal_securityheaders.headers.STSSeconds=31536000"
-      - "traefik.http.middlewares.robinopletal_securityheaders.headers.STSIncludeSubdomains=true"
-      - "traefik.http.middlewares.robinopletal_securityheaders.headers.STSPreload=true"
+      - "traefik.http.middlewares.robinopletal_chain.chain.middlewares=trim_www,hsts"
+      - "traefik.http.routers.robinopletal.middlewares=robinopletal_chain"
 
   joplin-server:
     environment:
@@ -130,7 +146,8 @@ services:
       - "traefik.http.routers.qweebs-static-site.rule=Host(`qweebs.com`,`www.qweebs.com`)"
       - "traefik.http.routers.qweebs-static-site.entrypoints=websecure"
       - "traefik.http.routers.qweebs-static-site.tls.certresolver=cloudflare"
-      - "traefik.http.routers.qweebs-static-site.middlewares=qweebs-stripprefix"
+      - "traefik.http.middlewares.qweebs_chain.chain.middlewares=trim_www,hsts,qweebs-stripprefix"
+      - "traefik.http.routers.qweebs-static-site.middlewares=qweebs_chain"
       - "traefik.http.middlewares.qweebs-stripprefix.stripprefixregex.regex=(.*)"
       - "traefik.http.middlewares.qweebs-redirect.redirectregex.regex=^https:\\/\\/([^\\/]+)\\/?$$"
       - "traefik.http.middlewares.qweebs-redirect.redirectregex.replacement=https://qweebs.com"
@@ -151,13 +168,10 @@ services:
       - ./.chloewinkel_dot_com/site_data:/var/www/html
     labels:
       - "traefik.enable=true"
-      - "traefik.http.middlewares.securityheaders.headers.STSSeconds=31536000"
-      - "traefik.http.middlewares.securityheaders.headers.STSIncludeSubdomains=true"
-      - "traefik.http.middlewares.securityheaders.headers.STSPreload=true"
-      - "traefik.http.routers.whoami.middlewares=securityheaders@docker"
-      - "traefik.http.routers.whoami.rule=Host(`chloewinkel.com`,`www.chloewinkel.com`)"
-      - "traefik.http.routers.whoami.entrypoints=websecure"
-      - "traefik.http.routers.whoami.tls.certresolver=cloudflare"
+      - "traefik.http.routers.chloewinkel.middlewares=trim_www,hsts"
+      - "traefik.http.routers.chloewinkel.rule=Host(`chloewinkel.com`,`www.chloewinkel.com`)"
+      - "traefik.http.routers.chloewinkel.entrypoints=websecure"
+      - "traefik.http.routers.chloewinkel.tls.certresolver=cloudflare"
     restart: always
     environment:
       WORDPRESS_DB_HOST: chloewinkel_dot_com_db:3306
