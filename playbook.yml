@@ -73,6 +73,7 @@
       template:
         src: files/docker-compose.yml
         dest: "{{ workdir }}/docker-compose.yml"
+        mode: "0600"
       register: deploy_file
 
     - name: Prepare the directory structure for traefik config
