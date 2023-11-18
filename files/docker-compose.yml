@@ -96,7 +96,7 @@ services:
       - "traefik.http.routers.robinopletal.middlewares=robinopletal_chain"
 
   chloewinkel:
-    image: codeberg.org/fourstepper/chloewinkel.com:c73af2027a244481364e5b0eff83f27e9eff67af
+    image: codeberg.org/fourstepper/chloewinkel.com:latest
     container_name: chloewinkel
     expose:
       - "8080"
