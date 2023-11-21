@@ -64,11 +64,6 @@
         src: files/chloewinkel-dockerfile
         dest: "{{ workdir }}/.chloewinkel_dot_com/"
 
-    - name: Copy qweebs static site Dockerfile directory
-      copy:
-        src: files/qweebs-static-site/
-        dest: "{{ workdir }}/.qweebs-static-site"
-
     - name: Copy docker-compose
       template:
         src: files/docker-compose.yml

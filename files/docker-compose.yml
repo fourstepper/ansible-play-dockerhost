@@ -154,8 +154,7 @@ services:
 
   qweebs-static-site:
     container_name: qweebs-static-site
-    build:
-      context: ./.qweebs-static-site
+    image: ghcr.io/fourstepper/qweebs-static-site:latest
     restart: always
     expose:
       - 80
