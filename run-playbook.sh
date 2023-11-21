@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-if [ upgrade ]; then
+if [ $upgrade ]; then
     UPGRADE="-e upgrade=true";
 fi
 
