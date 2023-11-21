@@ -92,7 +92,10 @@ services:
       - "traefik.http.middlewares.tags-to-posts-tags.redirectregex.regex=^https://robinopletal.com/tags(.*)"
       - "traefik.http.middlewares.tags-to-posts-tags.redirectregex.replacement=https://robinopletal.com/posts/tags$${1}"
       - "traefik.http.middlewares.tags-to-posts-tags.redirectregex.permanent=true"
-      - "traefik.http.middlewares.robinopletal_chain.chain.middlewares=trim_www,hsts,tags-to-posts-tags"
+      - "traefik.http.middlewares.about-to-homepage.redirectregex.regex=^https://robinopletal.com/about[/]?"
+      - "traefik.http.middlewares.about-to-homepage.redirectregex.replacement=https://robinopletal.com"
+      - "traefik.http.middlewares.about-to-homepage.redirectregex.permanent=true"
+      - "traefik.http.middlewares.robinopletal_chain.chain.middlewares=trim_www,hsts,tags-to-posts-tags,about-to-homepage"
       - "traefik.http.routers.robinopletal.middlewares=robinopletal_chain"
 
   chloewinkel:
