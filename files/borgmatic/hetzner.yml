@@ -9,3 +9,9 @@ exclude_patterns: []
 repositories:
     - path: ssh://u375033-sub4@u375033.your-storagebox.de:23/./host1.borg
       label: hetzner
+
+ntfy:
+  topic: "{{ borgmatic_ntfy_topic }}"
+  fail:
+    title: A borgmatic backup failed on {{ ansible_hostname }}
+    message: You should probably fix it
