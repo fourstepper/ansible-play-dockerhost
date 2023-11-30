@@ -99,7 +99,7 @@ services:
       - "traefik.http.routers.robinopletal.middlewares=robinopletal_chain"
 
   chloewinkel:
-    image: ghcr.io/fourstepper/robinopletal.com:latest
+    image: ghcr.io/fourstepper/chloewinkel.com:latest
     container_name: chloewinkel
     expose:
       - "8080"
