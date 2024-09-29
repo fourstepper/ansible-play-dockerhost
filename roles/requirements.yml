@@ -1,5 +1,5 @@
 - src: geerlingguy.docker
 
-- src: git@codeberg.org:fourstepper/ansible-role-borgmatic.git
+- src: git@github.com:fourstepper/ansible-role-borgmatic
   scm: git
-  branch: main
+  version: main

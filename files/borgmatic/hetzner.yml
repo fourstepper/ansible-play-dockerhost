@@ -1,17 +1,13 @@
-encryption_passphrase: "{{ borg_encryption_key }}"
-exclude_caches: true
+location:
+  exclude_caches: true
 
-source_directories:
-  - "/"
+  source_directories:
+    - /
 
-exclude_patterns: []
+  exclude_patterns: []
 
-repositories:
-    - path: ssh://u375033-sub4@u375033.your-storagebox.de:23/./host1.borg
-      label: hetzner
+  repositories:
+    - ssh://u375033-sub4@u375033.your-storagebox.de:23/./host1.borg
 
-ntfy:
-  topic: "{{ borgmatic_ntfy_topic }}"
-  fail:
-    title: A borgmatic backup failed on {{ ansible_hostname }}
-    message: You should probably fix it
+storage:
+  encryption_passphrase: "{{ borg_encryption_key }}"

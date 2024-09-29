@@ -95,7 +95,7 @@
     # TODO: Edit the docker-compose up smarted (for them to work in one command)
 
     - name: Upgrade the containers and run `docker-compose up`
-      community.general.docker_compose:
+      community.docker.docker_compose_v2:
         project_src: "{{ workdir }}"
         pull: true
         remove_orphans: true
@@ -103,7 +103,7 @@
       when: upgrade
 
     - name: Run `docker-compose up`
-      community.general.docker_compose:
+      community.docker.docker_compose_v2:
         project_src: "{{ workdir }}"
       register: output
       when: deploy_file.changed and not upgrade
