@@ -97,7 +97,7 @@
     - name: Upgrade the containers and run `docker-compose up`
       community.docker.docker_compose_v2:
         project_src: "{{ workdir }}"
-        pull: true
+        pull: always
         remove_orphans: true
       register: output
       when: upgrade
