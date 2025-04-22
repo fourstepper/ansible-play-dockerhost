@@ -19,37 +19,8 @@
           - python3-compose
           - python3-pexpect
         state: present
-
-    - name: Check if we have connection to the Storage Box
-      command: "ssh -o StrictHostKeyChecking=no {{ hetzner_storagebox_connection_string }} -p23 'ls'"
-      register: check_passwordless_ssh
-      ignore_errors: true
-      changed_when: false
-
-    - block:
-      - name: Ensure SSH directory exist
-        ansible.builtin.file:
-          path: "$HOME/.ssh/"
-          state: directory
-          mode: "0700"
-
-      - name: Generate an OpenSSH keypair
-        community.crypto.openssh_keypair:
-          path: "$HOME/.ssh/id_ed25519"
-          mode: "0600"
-          type: "ed25519"
-
-      - name: Propagate the key to the Hetzner storage box
-        ansible.builtin.expect:
-          command: "/bin/bash -c \"cat ~/.ssh/id_ed25519.pub | ssh -p23 {{ hetzner_storagebox_connection_string }} install-ssh-key\""
-          responses:
-            (?i)password: "{{ hetzner_storagebox_password }}"
-        no_log: true
-      when: check_passwordless_ssh.failed
-
   roles:
     - role: geerlingguy.docker
-    - role: ansible-role-borgmatic
 
   tasks:
     - name: Create the needed directory structure
