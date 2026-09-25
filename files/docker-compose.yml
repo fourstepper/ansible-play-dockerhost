@@ -97,19 +97,6 @@ services:
       - "traefik.http.middlewares.robinopletal_chain.chain.middlewares=trim_www,hsts,tags-to-posts-tags,about-to-homepage"
       - "traefik.http.routers.robinopletal.middlewares=robinopletal_chain"
 
-  chloewinkel:
-    image: ghcr.io/fourstepper/chloewinkel.com:latest
-    container_name: chloewinkel
-    expose:
-      - "8080"
-    restart: unless-stopped
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.chloewinkelv2.rule=Host(`chloe.robinopletal.com`)"
-      - "traefik.http.routers.chloewinkelv2.entrypoints=websecure"
-      - "traefik.http.routers.chloewinkelv2.tls.certresolver=cloudflare"
-      - "traefik.http.routers.chloewinkelv2.middlewares=hsts"
-
   joplin-server:
     environment:
       - APP_BASE_URL=https://joplin.robinopletal.com
@@ -174,27 +161,6 @@ services:
       - "traefik.http.middlewares.discord.redirectregex.regex=^https:\\/\\/([^\\/]+)\\/?$$"
       - "traefik.http.middlewares.discord.redirectregex.replacement=https://discord.com/invite/cmjMM9Ccq3"
 
-  chloewinkel_dot_com_web:
-    depends_on:
-      - chloewinkel_dot_com_db
-    build:
-      context: ./.chloewinkel_dot_com/chloewinkel-dockerfile
-    container_name: "chloewinkel_dot_com_web"
-    volumes:
-      - ./.chloewinkel_dot_com/site_data:/var/www/html
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.chloewinkel.middlewares=trim_www,hsts"
-      - "traefik.http.routers.chloewinkel.rule=Host(`chloewinkel.com`) || Host(`www.chloewinkel.com`)"
-      - "traefik.http.routers.chloewinkel.entrypoints=websecure"
-      - "traefik.http.routers.chloewinkel.tls.certresolver=cloudflare"
-    restart: always
-    environment:
-      WORDPRESS_DB_HOST: chloewinkel_dot_com_db:3306
-      WORDPRESS_DB_USER: wordpress
-      WORDPRESS_DB_PASSWORD: "{{ mysql_password_chloewinkel }}"
-      WORDPRESS_DB_NAME: wordpress
-
   chloewinkel_dot_com_db:
     image: mariadb:11.1
     volumes:
@@ -206,7 +172,6 @@ services:
       MYSQL_DATABASE: wordpress
       MYSQL_USER: wordpress
       MYSQL_PASSWORD: "{{ mysql_password_chloewinkel }}"
-
 
 volumes:
   db_data:

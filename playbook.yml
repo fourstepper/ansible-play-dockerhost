@@ -30,11 +30,6 @@
         mode: 0600
       changed_when: false
 
-    - name: Copy chloewinkel Dockerfile directory
-      copy:
-        src: files/chloewinkel-dockerfile
-        dest: "{{ workdir }}/.chloewinkel_dot_com/"
-
     - name: Copy docker-compose
       template:
         src: files/docker-compose.yml
