@@ -1,6 +1,6 @@
 services:
   traefik:
-    image: "traefik:v2.10.5"
+    image: "traefik:v3.7"
     container_name: "traefik"
     restart: always
     environment:
@@ -34,7 +34,7 @@ services:
       traefik.enable: true
 
       # Global redirection: http to https
-      traefik.http.routers.http_catchall.rule: HostRegexp(`{host:.+}`)
+      traefik.http.routers.http_catchall.rule: HostRegexp(`.+`)
       traefik.http.routers.http_catchall.entrypoints: web
       traefik.http.routers.http_catchall.middlewares: tohttps
 
@@ -85,7 +85,7 @@ services:
     restart: unless-stopped
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.robinopletal.rule=Host(`robinopletal.com`,`www.robinopletal.com`)"
+      - "traefik.http.routers.robinopletal.rule=Host(`robinopletal.com`) || Host(`www.robinopletal.com`)"
       - "traefik.http.routers.robinopletal.entrypoints=websecure"
       - "traefik.http.routers.robinopletal.tls.certresolver=cloudflare"
       - "traefik.http.middlewares.tags-to-posts-tags.redirectregex.regex=^https://robinopletal.com/tags(.*)"
@@ -159,7 +159,7 @@ services:
       - 80
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.qweebs-static-site.rule=Host(`qweebs.com`,`www.qweebs.com`)"
+      - "traefik.http.routers.qweebs-static-site.rule=Host(`qweebs.com`) || Host(`www.qweebs.com`)"
       - "traefik.http.routers.qweebs-static-site.entrypoints=websecure"
       - "traefik.http.routers.qweebs-static-site.tls.certresolver=cloudflare"
       - "traefik.http.middlewares.qweebs_chain.chain.middlewares=trim_www,hsts,qweebs-stripprefix"
@@ -185,7 +185,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.chloewinkel.middlewares=trim_www,hsts"
-      - "traefik.http.routers.chloewinkel.rule=Host(`chloewinkel.com`,`www.chloewinkel.com`)"
+      - "traefik.http.routers.chloewinkel.rule=Host(`chloewinkel.com`) || Host(`www.chloewinkel.com`)"
       - "traefik.http.routers.chloewinkel.entrypoints=websecure"
       - "traefik.http.routers.chloewinkel.tls.certresolver=cloudflare"
     restart: always
