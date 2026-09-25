@@ -16,7 +16,6 @@
         name:
           - python3
           - python3-docker
-          - python3-compose
           - python3-pexpect
         state: present
   roles:
