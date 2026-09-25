@@ -66,10 +66,10 @@
         pull: always
         remove_orphans: true
       register: output
-      when: upgrade
+      when: upgrade | bool
 
     - name: Run `docker-compose up`
       community.docker.docker_compose_v2:
         project_src: "{{ workdir }}"
       register: output
-      when: deploy_file.changed and not upgrade
+      when: deploy_file.changed and not (upgrade | bool)
